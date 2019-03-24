@@ -13,12 +13,14 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 from gan_params import hidden_units
-from gan_params import input_size
+from gan_params import input_size_generator
+from gan_params import input_size_discriminator
 from gan_params import learning_rate
 from gan_params import batch_size
 from gan_params import seq_length
 from gan_params import latent_dim
 from gan_params import num_generated_features
+
 
 
 torch.manual_seed(1)
@@ -32,28 +34,23 @@ class GANGenerator(nn.Module):
 
 		super(GANGenerator, self).__init__()
 		self.hidden_units = hidden_units
-		self.input_size_generator = input_size
-		self.learning_rate = learning_rate
+		self.input_size = input_size_generator
 		self.batch_size = batch_size
 		self.latent_dim = latent_dim
 		self.seq_length = seq_length
 		self.num_generated_features = num_generated_features
 
-		self.W_out_g = self.init_weights()
-		self.b_out_g = self.init_biase()
+		self.W_out_g = self.init_GeneratorWeights()
+		self.b_out_g = self.init_GeneratorBiase()
 
-		self.generator = nn.LSTM(input_size=input_size,hidden_size=self.hidden_units,num_layers=1).to(device)
+		self.generator = nn.LSTM(input_size=self.input_size,hidden_size=self.hidden_units,num_layers=1).to(device)
 
 
-	# def sample_Z(self):
-	# 	sample = np.float32(np.random.normal(size=[self.batch_size, self.seq_length, self.latent_dim]))
-	# 	return sample
-
-	def init_weights(self):
+	def init_GeneratorWeights(self):
 		return torch.distributions.Normal(0,1).sample((self.hidden_units,self.num_generated_features)).to(device)
 
-	def init_biase(self):
-		return torch.distributions.Normal(0,1).sample([1])
+	def init_GeneratorBiase(self):
+		return torch.distributions.Normal(0,1).sample([1]).to(device)
 
 
 	'''
@@ -62,9 +59,9 @@ class GANGenerator(nn.Module):
 	'''
 
 	def forward(self,Z):
-		lstm_out,_ = self.generator(Z.view(self.seq_length,self.batch_size,-1))
+		lstm_out,_ = self.generator(Z.view(self.seq_length,-1,self.input_size))
 		logits_2d = torch.matmul(lstm_out,self.W_out_g) + self.b_out_g
-		output_2d = nn.Tanh(logits_2d)
+		output_2d = torch.tanh(logits_2d)
 		output_3d = output_2d.view(-1,self.seq_length,self.num_generated_features)
 		return output_3d
 
@@ -77,3 +74,37 @@ class GANdiscriminator(nn.Module):
 		
 		super(GANdiscriminator,self).__init__()
 		self.hidden_units = hidden_units
+		self.input_size_discriminator = input_size_discriminator
+		self.seq_length = seq_length
+		self.num_generated_features = num_generated_features
+
+		self.W_out_d = self.init_DiscriminatorWeights()
+		self.b_out_d = self.init_DiscriminatorBiase()
+		self.discriminator = nn.LSTM(input_size=self.num_generated_features,hidden_size=self.hidden_units,num_layers=1).to(device)
+
+
+	def init_DiscriminatorWeights(self):
+		return torch.distributions.Normal(0,1).sample([self.hidden_units,1]).to(device)
+
+	def init_DiscriminatorBiase(self):
+		return torch.distributions.Normal(0,1).sample([1]).to(device)
+
+	def forward(self,data):
+		lstm_out,_ = self.discriminator(data.view(self.seq_length,-1,self.num_generated_features))
+		lstm_out_flat = lstm_out.view(-1,self.hidden_units)
+		logits = torch.matmul(lstm_out_flat, self.W_out_d) + self.b_out_d
+		output = torch.sigmoid(logits)
+
+		return output,logits
+
+
+
+'''
+Testing the implementation of the generator and discriminator
+'''
+
+if __name__ == '__main__':
+	x = torch.randn(10,10,50)
+	test = GANGenerator(hidden_units)
+	out = test.forward(x)
+	print out.shape
