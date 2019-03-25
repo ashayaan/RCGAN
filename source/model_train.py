@@ -18,3 +18,7 @@ from gan_params import num_generated_features
 from gan import (GANGenerator, GANDiscriminator)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+class Network(nn.module):
+	def __init__(self):
+		

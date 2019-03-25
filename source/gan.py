@@ -43,14 +43,20 @@ class GANGenerator(nn.Module):
 		self.W_out_g = self.init_GeneratorWeights()
 		self.b_out_g = self.init_GeneratorBiase()
 
+
 		self.generator = nn.LSTM(input_size=self.input_size,hidden_size=self.hidden_units,num_layers=1).to(device)
 
 
 	def init_GeneratorWeights(self):
-		return torch.distributions.Normal(0,1).sample((self.hidden_units,self.num_generated_features)).to(device)
+		temp = torch.distributions.Normal(0,1).sample((self.hidden_units,self.num_generated_features)).to(device)
+		temp.requires_grad = True
+		# print temp.requires_grad
+		return temp
 
 	def init_GeneratorBiase(self):
-		return torch.distributions.Normal(0,1).sample([1]).to(device)
+		temp = torch.distributions.Normal(0,1).sample([1]).to(device)
+		temp.requires_grad = True
+		return temp
 
 
 	'''
@@ -84,10 +90,15 @@ class GANdiscriminator(nn.Module):
 
 
 	def init_DiscriminatorWeights(self):
-		return torch.distributions.Normal(0,1).sample([self.hidden_units,1]).to(device)
+		temp = torch.distributions.Normal(0,1).sample([self.hidden_units,1]).to(device)
+		temp.requires_grad = True
+		return temp
 
 	def init_DiscriminatorBiase(self):
-		return torch.distributions.Normal(0,1).sample([1]).to(device)
+		temp = torch.distributions.Normal(0,1).sample([1]).to(device)
+		temp.requires_grad = True
+		return temp
+
 
 	def forward(self,data):
 		lstm_out,_ = self.discriminator(data.view(self.seq_length,-1,self.num_generated_features))
@@ -105,6 +116,7 @@ Testing the implementation of the generator and discriminator
 
 if __name__ == '__main__':
 	x = torch.randn(10,10,50)
-	test = GANGenerator(hidden_units)
-	out = test.forward(x)
-	print out.shape
+	test = GANdiscriminator(hidden_units)
+	
+	print test.W_out_d.requires_grad
+	print test.b_out_d.requires_grad
