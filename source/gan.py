@@ -75,10 +75,10 @@ class GANGenerator(nn.Module):
 '''
 The gan discriminator model with all the parameters defining the lstm
 '''
-class GANdiscriminator(nn.Module):
+class GANDiscriminator(nn.Module):
 	def __init__(self,hidden_units):
 		
-		super(GANdiscriminator,self).__init__()
+		super(GANDiscriminator,self).__init__()
 		self.hidden_units = hidden_units
 		self.input_size_discriminator = input_size_discriminator
 		self.seq_length = seq_length
