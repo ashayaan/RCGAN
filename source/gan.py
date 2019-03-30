@@ -20,7 +20,7 @@ from gan_params import batch_size
 from gan_params import seq_length
 from gan_params import latent_dim
 from gan_params import num_generated_features
-
+from gan_params import num_layers
 
 
 torch.manual_seed(1)
@@ -39,12 +39,13 @@ class GANGenerator(nn.Module):
 		self.latent_dim = latent_dim
 		self.seq_length = seq_length
 		self.num_generated_features = num_generated_features
+		self.num_layers = num_layers
 
 		self.W_out_g = self.init_GeneratorWeights()
 		self.b_out_g = self.init_GeneratorBiase()
 
 
-		self.generator = nn.LSTM(input_size=self.input_size,hidden_size=self.hidden_units,num_layers=1).to(device)
+		self.generator = nn.LSTM(input_size=self.input_size,hidden_size=self.hidden_units,num_layers= self.num_layers).to(device)
 
 
 	def init_GeneratorWeights(self):
@@ -83,10 +84,11 @@ class GANDiscriminator(nn.Module):
 		self.input_size_discriminator = input_size_discriminator
 		self.seq_length = seq_length
 		self.num_generated_features = num_generated_features
+		self.num_layers = num_layers
 
 		self.W_out_d = self.init_DiscriminatorWeights()
 		self.b_out_d = self.init_DiscriminatorBiase()
-		self.discriminator = nn.LSTM(input_size=self.num_generated_features,hidden_size=self.hidden_units,num_layers=1).to(device)
+		self.discriminator = nn.LSTM(input_size=self.num_generated_features,hidden_size=self.hidden_units,num_layers=self.num_layers).to(device)
 
 
 	def init_DiscriminatorWeights(self):
@@ -115,8 +117,6 @@ Testing the implementation of the generator and discriminator
 '''
 
 if __name__ == '__main__':
-	x = torch.randn(10,10,50)
-	test = GANdiscriminator(hidden_units)
-	
-	print test.W_out_d.requires_grad
-	print test.b_out_d.requires_grad
+	x = torch.randn((10,10,34))
+	generator = GANGenerator(hidden_units)
+	output = generator.forward(x)	

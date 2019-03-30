@@ -1,16 +1,16 @@
 #Common model parametres
-learning_rate = 0.001
-hidden_units = 150
-num_epochs = 50
+learning_rate = 0.0005
+num_layers = 2
+hidden_units = 250
+num_epochs = 100
 latent_dim = 20
 seq_length = 10
-batch_size = 10
+batch_size = 57
+num_generated_features = 14
+
 
 #Generator Parameters
-input_size_generator = 50
-num_generated_features = 4
-G_rounds = 1
+input_size_generator = 34
 
 #Discriminator Prameters
-input_size_discriminator = 4
-D_rounds = 3
+input_size_discriminator = 28

@@ -5,6 +5,10 @@ import numpy as np
 import pandas as pd
 import math
 import argparse
+import pickle
+import os
+from torch.distributions import normal
+import matplotlib.pyplot as plt
 
 from gan_params import hidden_units
 from gan_params import input_size_generator
@@ -15,15 +19,13 @@ from gan_params import seq_length
 from gan_params import latent_dim
 from gan_params import num_generated_features
 from gan_params import num_epochs
-from gan_params import G_rounds
-from gan_params import D_rounds
-from torch.distributions import normal
-
 
 
 from gan import (GANGenerator, GANDiscriminator)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+loss_data_frame = pd.DataFrame()
 
 class Network(nn.Module):
 	def __init__(self,hidden_units):
@@ -35,8 +37,8 @@ class Network(nn.Module):
 		self.seq_length = seq_length
 		self.batch_size = batch_size
 		self.latent_dim = latent_dim
-		self.G_rounds = G_rounds
-		self.D_rounds = D_rounds
+		self.weight = None
+		self.number_of_iteration = 0
 
 		self.generator = GANGenerator(self.hidden_units)
 		self.discriminator = GANDiscriminator(self.hidden_units)
@@ -55,7 +57,7 @@ class Network(nn.Module):
 		The discriminator will use a SGD optimizer
 		'''
 		self.generatorOptimizer = optim.Adam(generator_model_parameters)
-		self.discriminatorOptimizer = optim.SGD(discriminator_model_parameters, lr = self.learning_rate)
+		self.discriminatorOptimizer = optim.SGD(discriminator_model_parameters, lr=self.learning_rate, momentum=0.5)
 
 
 	def smaple_Z(self):
@@ -79,7 +81,7 @@ Reading the real stock data
 '''
 def readData(file):
 	df = pd.read_csv(file)
-	df = df.drop(columns = ['Date', 'Vol.','Change %']).values.astype(dtype=np.float32())
+	df = df.drop(columns = ['Date']).values.astype(dtype=np.float32())
 	df = df.reshape((-1,seq_length,num_generated_features))
 	return df
 
@@ -97,15 +99,28 @@ Function to the GAN
 '''
 
 def train_network(network,data,batch_size):
+	# print "Length of data " + str(len(data))
 	for batch_index in range(0, len(data), batch_size):
+		network.number_of_iteration += 1
+		
 		X = get_batch(data, batch_size, batch_index)
+		network.weight = get_batch(data, batch_size, batch_index)
 		Z = network.smaple_Z()
+		
+		input_generator = torch.cat((Z,network.weight),2)
+		# print Z.shape, network.weight.shape		
+		input_discriminator_real = torch.cat((X,network.weight),2)
 
+		# print input_generator.shape, input_discriminator.shape
 		#Froward Pass of the GAN
-		G_sample = network.generator.forward(Z)
-		D_real, D_logits_real = network.discriminator.forward(X)
-		D_fake, D_logits_fake = network.discriminator.forward(G_sample)
-	
+		G_sample = network.generator.forward(input_generator)
+		D_real, D_logits_real = network.discriminator.forward(input_discriminator_real)
+				
+		input_discriminator_fake = torch.cat((G_sample,network.weight),2)
+		D_fake, D_logits_fake = network.discriminator.forward(input_discriminator_fake)
+		
+		# print input_discriminator_fake.shape, input_discriminator_real.shape
+
 
 		#loss calculation
 		G_loss = network.generatorLoss(D_fake, torch.zeros_like(D_fake))
@@ -115,6 +130,10 @@ def train_network(network,data,batch_size):
 
 		print("GENERATOR LOSS: {}".format(G_loss.item()))
 		print("DISCRIMINATOR LOSS: {}".format(D_loss.item())) 
+
+		#Appending loss to a data frame to plot later
+		global loss_data_frame 
+		loss_data_frame = loss_data_frame.append([[network.number_of_iteration,G_loss.item(),D_loss.item()]])
 
 		#Back propagation
 		network.generatorOptimizer.zero_grad()
@@ -128,16 +147,19 @@ def train_network(network,data,batch_size):
 
 	return network
 
+def dumpModel(network):
+	file_name = os.getcwd()+'/saved_models/model.pkl'
+	pickle.dump(network,open(file_name,'wb'))
+
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
-	parser.add_argument("--datapath", type=str, default="../data/daily_data", help="path to the dataset")
-	parser.add_argument("--file", type=str, default="BHEL_Historical_Data.csv")
+	parser.add_argument("--datapath", type=str, default="../data", help="path to the dataset")
+	parser.add_argument("--file", type=str, default="combined.csv")
 	args = parser.parse_args()
 
 	file = args.datapath + '/' + args.file
 	data = readData(file)
-
 
 
 	network = Network(hidden_units)
@@ -145,3 +167,6 @@ if __name__ == '__main__':
 	for epoch in range(num_epochs):
 		print ('EPOCH : {}'.format(epoch + 1))
 		network = train_network(network, data, batch_size)
+
+	loss_data_frame.to_csv('../data/loss_momentum_8.csv',columns=None,index=False)
+	dumpModel(network)
