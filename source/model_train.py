@@ -57,7 +57,7 @@ class Network(nn.Module):
 		The discriminator will use a SGD optimizer
 		'''
 		self.generatorOptimizer = optim.Adam(generator_model_parameters)
-		self.discriminatorOptimizer = optim.SGD(discriminator_model_parameters, lr=self.learning_rate, momentum=0.5)
+		self.discriminatorOptimizer = optim.SGD(discriminator_model_parameters, lr=self.learning_rate, momentum=0.4)
 
 
 	def smaple_Z(self):
@@ -98,7 +98,7 @@ def get_batch(data,batch_size, batch_index):
 Function to the GAN
 '''
 
-def train_network(network,data,batch_size):
+def train_network(network,data,batch_size, epoch):
 	# print "Length of data " + str(len(data))
 	for batch_index in range(0, len(data), batch_size):
 		network.number_of_iteration += 1
@@ -145,6 +145,13 @@ def train_network(network,data,batch_size):
 		D_loss.backward(retain_graph=True)
 		network.discriminatorOptimizer.step()
 
+		if epoch == 50:
+			temp = np.array(G_sample.data)
+			pan = pd.Panel(temp)
+			df = pan.swapaxes(0, 2).to_frame()
+			df.index = df.index.droplevel('minor')
+			df.to_csv('../data/generated_data.csv',index = False)
+
 	return network
 
 def dumpModel(network):
@@ -166,7 +173,7 @@ if __name__ == '__main__':
 
 	for epoch in range(num_epochs):
 		print ('EPOCH : {}'.format(epoch + 1))
-		network = train_network(network, data, batch_size)
+		network = train_network(network, data, batch_size, epoch+1)
 
-	loss_data_frame.to_csv('../data/loss_momentum_8.csv',columns=None,index=False)
+	loss_data_frame.to_csv('../data/loss/loss_momentum_8.csv',columns=None,index=False)
 	dumpModel(network)

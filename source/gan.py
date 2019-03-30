@@ -120,3 +120,12 @@ if __name__ == '__main__':
 	x = torch.randn((10,10,34))
 	generator = GANGenerator(hidden_units)
 	output = generator.forward(x)	
+	test  = np.array(output.data)
+	pan = pd.Panel(test)
+	df = pan.swapaxes(0, 2).to_frame()
+	df.index = df.index.droplevel('minor')
+
+	print df.head()
+
+
+	
