@@ -25,12 +25,13 @@ def mergeReturns(data_frames,files):
 	data = {}
 	for name in data_frames.keys():
 		column_name = name.split('.')[0]
+		column_name = column_name.split('_')[0]
 	 	data[column_name] = list(data_frames[name]['Return'])
 
 
 	df = pd.DataFrame.from_dict(data)
 	df['Date'] = data_frames['BHEL_Historical_Data.csv']['Date']
-	df.to_csv('combined_returns.csv',index=False)	
+	df.to_csv('combined.csv',index=False)	
 
 if __name__ == '__main__':
 	path = 'daily_data'
