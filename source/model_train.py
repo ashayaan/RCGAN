@@ -55,7 +55,7 @@ class Network(nn.Module):
 		The discriminator will use a SGD optimizer
 		'''
 		self.generatorOptimizer = optim.Adam(generator_model_parameters)
-		self.discriminatorOptimizer = optim.SGD(discriminator_model_parameters, lr = self.learning_rate, momentum=0.4)
+		self.discriminatorOptimizer = optim.SGD(discriminator_model_parameters, lr = self.learning_rate)
 
 
 	def smaple_Z(self):
@@ -147,4 +147,9 @@ if __name__ == '__main__':
 		print ('EPOCH : {}'.format(epoch + 1))
 		network = train_network(network, data, batch_size)
 
-	print network.generator.forward(network.smaple_Z())
+	test =  network.generator.forward(network.smaple_Z())
+	print test
+	pan = pd.Panel(test)
+	df = pan.swapaxes(0, 2).to_frame()
+	df.index = df.index.droplevel('minor')
+	df.to_csv('../data/generated_data.csv',index = False)

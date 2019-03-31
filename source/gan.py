@@ -44,7 +44,7 @@ class GANGenerator(nn.Module):
 		self.b_out_g = self.init_GeneratorBiase()
 
 
-		self.generator = nn.LSTM(input_size=self.input_size,hidden_size=self.hidden_units,num_layers=1).to(device)
+		self.generator = nn.LSTM(input_size=self.input_size,hidden_size=self.hidden_units,num_layers=2).to(device)
 
 
 	def init_GeneratorWeights(self):
@@ -86,7 +86,7 @@ class GANDiscriminator(nn.Module):
 
 		self.W_out_d = self.init_DiscriminatorWeights()
 		self.b_out_d = self.init_DiscriminatorBiase()
-		self.discriminator = nn.LSTM(input_size=self.num_generated_features,hidden_size=self.hidden_units,num_layers=1).to(device)
+		self.discriminator = nn.LSTM(input_size=self.num_generated_features,hidden_size=self.hidden_units,num_layers=2).to(device)
 
 
 	def init_DiscriminatorWeights(self):
