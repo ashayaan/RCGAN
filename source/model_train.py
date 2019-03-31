@@ -171,6 +171,7 @@ if __name__ == '__main__':
 	file = args.datapath + '/' + args.file
 	data = readData(file)
 
+	print len(data)/batch_size
 
 	network = Network(hidden_units)
 
