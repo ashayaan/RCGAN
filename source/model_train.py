@@ -55,7 +55,7 @@ class Network(nn.Module):
 		The discriminator will use a SGD optimizer
 		'''
 		self.generatorOptimizer = optim.Adam(generator_model_parameters)
-		self.discriminatorOptimizer = optim.SGD(discriminator_model_parameters, lr = self.learning_rate)
+		self.discriminatorOptimizer = optim.SGD(discriminator_model_parameters, lr = self.learning_rate, momentum=0.4)
 
 
 	def smaple_Z(self):
@@ -87,7 +87,7 @@ def readData(file):
 Getting the mini-batches to train the discriminator and returns a tensor
 '''
 def get_batch(data,batch_size, batch_index):
-	start_pos = batch_index
+	start_pos = batch_size * batch_index
 	end_pos = start_pos + batch_size
 	return torch.from_numpy(data[start_pos:end_pos])
 
@@ -97,7 +97,7 @@ Function to the GAN
 '''
 
 def train_network(network,data,batch_size):
-	for batch_index in range(0, len(data), batch_size):
+	for batch_index in range(0, int(len(data)/batch_size) - (network.D_rounds + network.G_rounds), network.D_rounds + network.G_rounds): 
 		X = get_batch(data, batch_size, batch_index)
 		Z = network.smaple_Z()
 
@@ -105,10 +105,11 @@ def train_network(network,data,batch_size):
 		G_sample = network.generator.forward(Z)
 		D_real, D_logits_real = network.discriminator.forward(X)
 		D_fake, D_logits_fake = network.discriminator.forward(G_sample)
-	
+
+		# print G_sample
 
 		#loss calculation
-		G_loss = network.generatorLoss(D_fake, torch.zeros_like(D_fake))
+		G_loss = network.generatorLoss(D_fake, torch.ones_like(D_fake))
 		D_loss_fake = network.discriminatorLoss(D_fake, torch.zeros_like(D_fake))
 		D_loss_real = network.discriminatorLoss(D_real, torch.ones_like(D_real))
 		D_loss = D_loss_real + D_loss_fake
@@ -145,3 +146,5 @@ if __name__ == '__main__':
 	for epoch in range(num_epochs):
 		print ('EPOCH : {}'.format(epoch + 1))
 		network = train_network(network, data, batch_size)
+
+	print network.generator.forward(network.smaple_Z())

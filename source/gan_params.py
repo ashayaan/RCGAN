@@ -1,6 +1,6 @@
 #Common model parametres
 learning_rate = 0.001
-hidden_units = 150
+hidden_units = 350
 num_epochs = 50
 latent_dim = 20
 seq_length = 10

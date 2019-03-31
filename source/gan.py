@@ -67,8 +67,8 @@ class GANGenerator(nn.Module):
 	def forward(self,Z):
 		lstm_out,_ = self.generator(Z.view(self.seq_length,-1,self.input_size))
 		logits_2d = torch.matmul(lstm_out,self.W_out_g) + self.b_out_g
-		output_2d = torch.tanh(logits_2d)
-		output_3d = output_2d.view(-1,self.seq_length,self.num_generated_features)
+		# output_2d = torch.tanh(logits_2d)
+		output_3d = logits_2d.view(-1,self.seq_length,self.num_generated_features)
 		return output_3d
 
 
@@ -116,7 +116,7 @@ Testing the implementation of the generator and discriminator
 
 if __name__ == '__main__':
 	x = torch.randn(10,10,50)
-	test = GANdiscriminator(hidden_units)
-	
-	print test.W_out_d.requires_grad
-	print test.b_out_d.requires_grad
+	test = GANGenerator(hidden_units)
+
+	x = test.forward(torch.randn((10,10,50)))
+	print x
