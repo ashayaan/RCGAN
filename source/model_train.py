@@ -79,6 +79,7 @@ Reading the real stock data
 '''
 def readData(file):
 	df = pd.read_csv(file)
+	df = df
 	df = df.drop(columns = ['Date', 'Vol.','Change %']).values.astype(dtype=np.float32())
 	df = df.reshape((-1,seq_length,num_generated_features))
 	return df
@@ -147,7 +148,9 @@ if __name__ == '__main__':
 		print ('EPOCH : {}'.format(epoch + 1))
 		network = train_network(network, data, batch_size)
 
+
 	test =  network.generator.forward(network.smaple_Z())
+	test = np.array(test.data)
 	print test
 	pan = pd.Panel(test)
 	df = pan.swapaxes(0, 2).to_frame()
