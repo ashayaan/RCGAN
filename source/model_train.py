@@ -9,6 +9,7 @@ import pickle
 import os
 from torch.distributions import normal
 import matplotlib.pyplot as plt
+import random 
 
 from gan_params import hidden_units
 from gan_params import input_size_generator
@@ -19,6 +20,8 @@ from gan_params import seq_length
 from gan_params import latent_dim
 from gan_params import num_generated_features
 from gan_params import num_epochs
+from gan_params import G_rounds
+from gan_params import D_rounds
 
 
 from gan import (GANGenerator, GANDiscriminator)
@@ -100,7 +103,7 @@ Function to the GAN
 
 def train_network(network,data,batch_size, epoch):
 	# print "Length of data " + str(len(data))
-	for batch_index in range(0, len(data), batch_size):
+	for batch_index in range(0, int(len(data)/batch_size) - (D_rounds + G_rounds), D_rounds + G_rounds): 
 		network.number_of_iteration += 1
 		
 		X = get_batch(data, batch_size, batch_index)
@@ -123,7 +126,7 @@ def train_network(network,data,batch_size, epoch):
 
 
 		#loss calculation
-		G_loss = network.generatorLoss(D_fake, torch.zeros_like(D_fake))
+		G_loss = network.generatorLoss(D_fake, torch.ones_like(D_fake))
 		D_loss_fake = network.discriminatorLoss(D_fake, torch.zeros_like(D_fake))
 		D_loss_real = network.discriminatorLoss(D_real, torch.ones_like(D_real))
 		D_loss = D_loss_real + D_loss_fake
@@ -162,7 +165,7 @@ def dumpModel(network):
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
 	parser.add_argument("--datapath", type=str, default="../data", help="path to the dataset")
-	parser.add_argument("--file", type=str, default="combined.csv")
+	parser.add_argument("--file", type=str, default="log_returns.csv")
 	args = parser.parse_args()
 
 	file = args.datapath + '/' + args.file
@@ -175,5 +178,20 @@ if __name__ == '__main__':
 		print ('EPOCH : {}'.format(epoch + 1))
 		network = train_network(network, data, batch_size, epoch+1)
 
-	loss_data_frame.to_csv('../data/loss/loss_momentum_8.csv',columns=None,index=False)
+
+	X = get_batch(data, batch_size, random.randint(0,30))
+	Z = network.smaple_Z()
+
+	generator_input = torch.cat((Z,X),2)
+	generator_output = network.generator.forward(generator_input)
+
+	generated_data = np.array(generator_output.data)
+	pan = pd.Panel(generated_data)
+	generated_data = pan.swapaxes(0, 2).to_frame()
+	generated_data.index = generated_data.index.droplevel('minor')
+	print generated_data
+	generated_data.to_csv('../data/generated_data.csv',index = False)
+
+
+	loss_data_frame.to_csv('../data/loss/loss.csv',columns=None,index=False)
 	dumpModel(network)

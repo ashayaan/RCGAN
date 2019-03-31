@@ -17,7 +17,7 @@ def readFiles(files):
 
 def calculateReturns(data_frames):
 	for name in data_frames.keys():
-		data_frames[name]['Return'] =  (data_frames[name]['Price'] -  data_frames[name]['Open']) / data_frames[name]['Open']
+		data_frames[name]['Return'] =  np.log(data_frames[name]['Price']) - np.log(data_frames[name]['Open'])
 	return data_frames
 
 
@@ -31,7 +31,7 @@ def mergeReturns(data_frames,files):
 
 	df = pd.DataFrame.from_dict(data)
 	df['Date'] = data_frames['BHEL_Historical_Data.csv']['Date']
-	df.to_csv('combined.csv',index=False)	
+	df.to_csv('log_returns.csv',index=False)	
 
 if __name__ == '__main__':
 	path = 'daily_data'
