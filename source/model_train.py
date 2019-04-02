@@ -110,6 +110,7 @@ def train_network(network,data,batch_size, epoch):
 		network.weight = get_batch(data, batch_size, batch_index)
 		Z = network.smaple_Z()
 		
+
 		input_generator = torch.cat((Z,network.weight),2)
 		# print Z.shape, network.weight.shape		
 		input_discriminator_real = torch.cat((X,network.weight),2)
@@ -148,12 +149,12 @@ def train_network(network,data,batch_size, epoch):
 		D_loss.backward(retain_graph=True)
 		network.discriminatorOptimizer.step()
 
-		if epoch == 50:
-			temp = np.array(G_sample.data)
-			pan = pd.Panel(temp)
-			df = pan.swapaxes(0, 2).to_frame()
-			df.index = df.index.droplevel('minor')
-			df.to_csv('../data/generated_data.csv',index = False)
+		# if epoch == 50:
+		# 	temp = np.array(G_sample.data)
+		# 	pan = pd.Panel(temp)
+		# 	df = pan.swapaxes(0, 2).to_frame()
+		# 	df.index = df.index.droplevel('minor')
+		# 	df.to_csv('../data/generated_data.csv',index = False)
 
 	return network
 
@@ -165,7 +166,7 @@ def dumpModel(network):
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
 	parser.add_argument("--datapath", type=str, default="../data", help="path to the dataset")
-	parser.add_argument("--file", type=str, default="log_returns.csv")
+	parser.add_argument("--file", type=str, default="combined.csv")
 	args = parser.parse_args()
 
 	file = args.datapath + '/' + args.file
@@ -191,7 +192,7 @@ if __name__ == '__main__':
 	generated_data = pan.swapaxes(0, 2).to_frame()
 	generated_data.index = generated_data.index.droplevel('minor')
 	print generated_data
-	generated_data.to_csv('../data/generated_data.csv',index = False)
+	generated_data.to_csv('../data/generated_data_four_layer.csv',index = False)
 
 
 	loss_data_frame.to_csv('../data/loss/loss.csv',columns=None,index=False)

@@ -45,7 +45,7 @@ class GANGenerator(nn.Module):
 		self.b_out_g = self.init_GeneratorBiase()
 
 
-		self.generator = nn.LSTM(input_size=self.input_size,hidden_size=self.hidden_units,num_layers= self.num_layers).to(device)
+		self.generator = nn.LSTM(input_size=self.input_size,hidden_size=self.hidden_units,num_layers= 1).to(device)
 
 
 	def init_GeneratorWeights(self):
@@ -88,7 +88,7 @@ class GANDiscriminator(nn.Module):
 
 		self.W_out_d = self.init_DiscriminatorWeights()
 		self.b_out_d = self.init_DiscriminatorBiase()
-		self.discriminator = nn.LSTM(input_size=self.num_generated_features,hidden_size=self.hidden_units,num_layers=self.num_layers).to(device)
+		self.discriminator = nn.LSTM(input_size=self.input_size_discriminator,hidden_size=self.hidden_units,num_layers=3).to(device)
 
 
 	def init_DiscriminatorWeights(self):
@@ -103,7 +103,7 @@ class GANDiscriminator(nn.Module):
 
 
 	def forward(self,data):
-		lstm_out,_ = self.discriminator(data.view(self.seq_length,-1,self.num_generated_features))
+		lstm_out,_ = self.discriminator(data.view(self.seq_length,-1,self.input_size_discriminator))
 		lstm_out_flat = lstm_out.view(-1,self.hidden_units)
 		logits = torch.matmul(lstm_out_flat, self.W_out_d) + self.b_out_d
 		output = torch.sigmoid(logits)
